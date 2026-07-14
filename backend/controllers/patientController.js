@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 const Patient = require('../models/Patient');
 
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const normalizeMedicines = (medicines) => {
   if (!Array.isArray(medicines)) {
     return [];
@@ -63,7 +65,7 @@ const searchPatients = async (req, res) => {
       });
     }
 
-    const regex = new RegExp(query, 'i');
+    const regex = new RegExp(escapeRegex(query), 'i');
     const patients = await Patient.find({
       $or: [{ patientName: regex }, { mobile: regex }],
     }).sort({ updatedAt: -1 });
