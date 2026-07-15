@@ -1,54 +1,50 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 const medicineSchema = new mongoose.Schema(
   {
     name: {
       type: String,
       trim: true,
-      default: '',
+      default: "",
     },
-    dose: {
-      type: String,
-      trim: true,
-      default: '',
-    },
+    qty: { type: Number, required: true, min: 0, default: 0 },
+    rate: { type: Number, required: true, min: 0, default: 0 },
+    total: { type: Number, required: true, min: 0, default: 0 },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const patientSchema = new mongoose.Schema(
   {
     patientName: {
       type: String,
-      required: [true, 'Patient name is required'],
+      required: [true, "Patient name is required"],
       trim: true,
-      index: true,
     },
     mobile: {
       type: String,
       trim: true,
-      index: true,
-      default: '',
+      default: "",
     },
     address: {
       type: String,
       trim: true,
-      default: '',
+      default: "",
     },
     doctorName: {
       type: String,
       trim: true,
-      default: '',
+      default: "",
     },
     doctorAddress: {
       type: String,
       trim: true,
-      default: '',
+      default: "",
     },
     disease: {
       type: String,
       trim: true,
-      default: '',
+      default: "",
     },
     medicines: {
       type: [medicineSchema],
@@ -57,13 +53,13 @@ const patientSchema = new mongoose.Schema(
     notes: {
       type: String,
       trim: true,
-      default: '',
+      default: "",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 patientSchema.index({ patientName: 1 });
 patientSchema.index({ mobile: 1 });
 
-module.exports = mongoose.model('Patient', patientSchema);
+module.exports = mongoose.model("Patient", patientSchema);

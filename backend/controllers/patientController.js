@@ -1,7 +1,13 @@
-const mongoose = require('mongoose');
-const Patient = require('../models/Patient');
+const mongoose = require("mongoose");
+const Patient = require("../models/Patient");
 
-const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const toNonNegativeNumber = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0) return 0;
+  return num;
+};
 
 const normalizeMedicines = (medicines) => {
   if (!Array.isArray(medicines)) {
@@ -9,32 +15,45 @@ const normalizeMedicines = (medicines) => {
   }
 
   return medicines
-    .map((item = {}) => ({
-      name: String(item.name || '').trim(),
-      dose: String(item.dose || '').trim(),
-    }))
-    .filter((item) => item.name || item.dose);
+    .map((item = {}) => {
+      const name = String(item.name || "").trim();
+      const qty = toNonNegativeNumber(item.qty);
+      const rate = toNonNegativeNumber(item.rate);
+      const total = qty * rate;
+
+      return { name, qty, rate, total };
+    })
+    .filter((item) => item.name || item.qty || item.rate || item.total);
 };
 
 const validatePayload = (payload) => {
   const patientName = payload?.patientName?.trim();
 
   if (!patientName) {
-    return 'Patient name is required.';
+    return "Patient name is required.";
+  }
+
+  for (const medicine of payload.medicines || []) {
+    if (!medicine.name) {
+      return "Medicine name is required for each medicine row.";
+    }
+    if (medicine.qty < 0 || medicine.rate < 0) {
+      return "Medicine qty and rate must be non-negative.";
+    }
   }
 
   return null;
 };
 
 const buildPayload = (body) => ({
-  patientName: String(body.patientName || '').trim(),
-  mobile: String(body.mobile || '').trim(),
-  address: String(body.address || '').trim(),
-  doctorName: String(body.doctorName || '').trim(),
-  doctorAddress: String(body.doctorAddress || '').trim(),
-  disease: String(body.disease || '').trim(),
+  patientName: String(body.patientName || "").trim(),
+  mobile: String(body.mobile || "").trim(),
+  address: String(body.address || "").trim(),
+  doctorName: String(body.doctorName || "").trim(),
+  doctorAddress: String(body.doctorAddress || "").trim(),
+  disease: String(body.disease || "").trim(),
   medicines: normalizeMedicines(body.medicines),
-  notes: String(body.notes || '').trim(),
+  notes: String(body.notes || "").trim(),
 });
 
 const getPatients = async (req, res) => {
@@ -48,7 +67,7 @@ const getPatients = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch patients.',
+      message: "Failed to fetch patients.",
       error: error.message,
     });
   }
@@ -65,7 +84,7 @@ const searchPatients = async (req, res) => {
       });
     }
 
-    const regex = new RegExp(escapeRegex(query), 'i');
+    const regex = new RegExp(escapeRegex(query), "i");
     const patients = await Patient.find({
       $or: [{ patientName: regex }, { mobile: regex }],
     }).sort({ updatedAt: -1 });
@@ -77,7 +96,7 @@ const searchPatients = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to search patients.',
+      message: "Failed to search patients.",
       error: error.message,
     });
   }
@@ -90,7 +109,7 @@ const getPatientById = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid patient id.',
+        message: "Invalid patient id.",
       });
     }
 
@@ -99,7 +118,7 @@ const getPatientById = async (req, res) => {
     if (!patient) {
       return res.status(404).json({
         success: false,
-        message: 'Patient not found.',
+        message: "Patient not found.",
       });
     }
 
@@ -110,7 +129,7 @@ const getPatientById = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to fetch patient.',
+      message: "Failed to fetch patient.",
       error: error.message,
     });
   }
@@ -133,12 +152,12 @@ const createPatient = async (req, res) => {
     return res.status(201).json({
       success: true,
       data: patient,
-      message: 'Patient created successfully.',
+      message: "Patient created successfully.",
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to create patient.',
+      message: "Failed to create patient.",
       error: error.message,
     });
   }
@@ -151,7 +170,7 @@ const updatePatient = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid patient id.',
+        message: "Invalid patient id.",
       });
     }
 
@@ -173,19 +192,19 @@ const updatePatient = async (req, res) => {
     if (!patient) {
       return res.status(404).json({
         success: false,
-        message: 'Patient not found.',
+        message: "Patient not found.",
       });
     }
 
     return res.status(200).json({
       success: true,
       data: patient,
-      message: 'Patient updated successfully.',
+      message: "Patient updated successfully.",
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: 'Failed to update patient.',
+      message: "Failed to update patient.",
       error: error.message,
     });
   }
@@ -196,29 +215,36 @@ const deletePatient = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.log("Invalid ObjectId");
       return res.status(400).json({
         success: false,
-        message: 'Invalid patient id.',
+        message: "Invalid patient id.",
       });
     }
 
     const patient = await Patient.findByIdAndDelete(id);
 
+    console.log("Deleted Patient:", patient);
+
     if (!patient) {
+      console.log("Patient not found");
       return res.status(404).json({
         success: false,
-        message: 'Patient not found.',
+        message: "Patient not found.",
       });
     }
 
+    console.log("Delete successful");
+
     return res.status(200).json({
       success: true,
-      message: 'Patient deleted successfully.',
+      message: "Patient deleted successfully.",
     });
   } catch (error) {
+    console.log(error);
     return res.status(500).json({
       success: false,
-      message: 'Failed to delete patient.',
+      message: "Failed to delete patient.",
       error: error.message,
     });
   }
