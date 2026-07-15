@@ -93,7 +93,8 @@ export const SHADOWS = {
 
 // ---- Unchanged (business logic — do not touch) ----
 export const API_BASE_URL =
-  process.env.EXPO_PUBLIC_API_BASE_URL || "http://localhost:5000/api";
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  "https://medical-record-app-k2jp.onrender.com/api";
 
 // export const COLORS = {
 //   white: "#FFFFFF",
