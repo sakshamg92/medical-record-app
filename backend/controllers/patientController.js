@@ -58,9 +58,12 @@ const buildPayload = (body) => ({
 
 const getPatients = async (req, res) => {
   try {
-    const patients = await Patient.find({ user: req.user.id }).sort({
-      updatedAt: -1,
-    });
+    // const patients = await Patient.find({ user: req.user.id }).sort({
+    //   updatedAt: -1,
+    // });
+    const patients = await Patient.find({ user: req.user.id })
+      .collation({ locale: "en", strength: 2 })
+      .sort({ patientName: 1 });
 
     return res.status(200).json({
       success: true,
@@ -90,7 +93,9 @@ const searchPatients = async (req, res) => {
     const patients = await Patient.find({
       user: req.user.id,
       $or: [{ patientName: regex }, { mobile: regex }],
-    }).sort({ updatedAt: -1 });
+    })
+      .collation({ locale: "en", strength: 2 })
+      .sort({ patientName: 1 });
 
     return res.status(200).json({
       success: true,

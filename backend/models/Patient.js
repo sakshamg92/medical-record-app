@@ -64,9 +64,11 @@ const patientSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-patientSchema.index({ patientName: 1 });
-patientSchema.index({ mobile: 1 });
-patientSchema.index({ user: 1 });
+patientSchema.index({ user: 1, patientName: 1 });
+patientSchema.index({ user: 1, mobile: 1 });
+// patientSchema.index({ patientName: 1 });
+// patientSchema.index({ mobile: 1 });
+// patientSchema.index({ user: 1 });
 
 module.exports = mongoose.model("Patient", patientSchema);
 // const mongoose = require("mongoose");
