@@ -4,6 +4,8 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const patientRoutes = require("./routes/patientRoutes");
+const prescriptionRoutes = require("./routes/prescriptionRoutes");
+const visitRoutes = require("./routes/visitRoutes");
 const authMiddleware = require("./middleware/authMiddleware");
 const {
   authLimiter,
@@ -23,6 +25,13 @@ app.get("/api/health", (req, res) => {
 
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/patients", patientLimiter, authMiddleware, patientRoutes);
+app.use(
+  "/api/prescriptions",
+  patientLimiter,
+  authMiddleware,
+  prescriptionRoutes,
+);
+app.use("/api/visits", patientLimiter, authMiddleware, visitRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
